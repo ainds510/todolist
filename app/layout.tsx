@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Layout } from "antd";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,12 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body>
-        <Layout style={{ minHeight: "100vh" }}>
-          {children}
-        </Layout>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="zh-CN">
+        <body>
+          <Layout style={{ minHeight: "100vh" }}>
+            {children}
+          </Layout>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
