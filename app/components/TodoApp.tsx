@@ -40,6 +40,8 @@ interface TodoRow {
   priority: TodoPriority;
   user_id: string;
   created_at: string;
+  timeline: string | null;
+  resources: string | null;
 }
 
 interface Todo {
@@ -47,13 +49,23 @@ interface Todo {
   content: string;
   isCompleted: boolean;
   priority: TodoPriority;
+  timeline?: string;
+  resources?: string;
 }
 
 type TodoFilter = 'all' | 'active' | 'completed';
 type BreakdownResponseItem = {
   title: string;
+  timeline: string;
+  resources: string;
   priority: TodoPriority;
 };
+
+const AI_TIMELINE_PREFIX = 'Timeline:';
+const AI_RESOURCES_PREFIX = 'Resources:';
+const TODO_SELECT_BASE =
+  'id, content, is_completed, priority, user_id, created_at';
+const TODO_SELECT_EXTENDED = `${TODO_SELECT_BASE}, timeline, resources`;
 
 const priorityColorMap: Record<TodoPriority, string> = {
   low: 'blue',
@@ -63,12 +75,28 @@ const priorityColorMap: Record<TodoPriority, string> = {
 
 const loadingSkeletonItems = Array.from({ length: 4 }, (_, index) => index);
 
-const mapTodoRow = (row: TodoRow): Todo => ({
-  id: row.id,
-  content: row.content,
-  isCompleted: row.is_completed,
-  priority: row.priority,
-});
+const mapTodoRow = (row: TodoRow): Todo => {
+  const [titleLine, ...extraLines] = row.content.split('\n');
+  const timelineLine = extraLines.find((line) =>
+    line.startsWith(AI_TIMELINE_PREFIX)
+  );
+  const resourcesLine = extraLines.find((line) =>
+    line.startsWith(AI_RESOURCES_PREFIX)
+  );
+
+  return {
+    id: row.id,
+    content: titleLine.trim(),
+    isCompleted: row.is_completed,
+    priority: row.priority,
+    timeline:
+      row.timeline?.trim() ||
+      timelineLine?.replace(AI_TIMELINE_PREFIX, '').trim(),
+    resources:
+      row.resources?.trim() ||
+      resourcesLine?.replace(AI_RESOURCES_PREFIX, '').trim(),
+  };
+};
 
 const isValidBreakdownResponse = (
   value: unknown
@@ -82,17 +110,43 @@ const isValidBreakdownResponse = (
       return false;
     }
 
-    const { title, priority } = item as {
+    const { title, timeline, resources, priority } = item as {
       title?: unknown;
+      timeline?: unknown;
+      resources?: unknown;
       priority?: unknown;
     };
 
     return (
       typeof title === 'string' &&
       title.trim().length > 0 &&
+      typeof timeline === 'string' &&
+      timeline.trim().length > 0 &&
+      typeof resources === 'string' &&
+      resources.trim().length > 0 &&
       (priority === 'low' || priority === 'medium' || priority === 'high')
     );
   });
+};
+
+const buildAiTodoContent = ({
+  title,
+  timeline,
+  resources,
+}: BreakdownResponseItem) =>
+  [
+    title.trim(),
+    `${AI_TIMELINE_PREFIX} ${timeline.trim()}`,
+    `${AI_RESOURCES_PREFIX} ${resources.trim()}`,
+  ].join('\n');
+
+const isMissingExtendedTodoFieldsError = (error: { message?: string } | null) => {
+  const message = error?.message?.toLowerCase() ?? '';
+
+  return (
+    message.includes('column') &&
+    (message.includes('timeline') || message.includes('resources'))
+  );
 };
 
 export default function TodoApp() {
@@ -106,6 +160,8 @@ export default function TodoApp() {
   const [isGeneratingAiTodos, setIsGeneratingAiTodos] = useState(false);
   const [pendingTodoIds, setPendingTodoIds] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<TodoFilter>('all');
+  const [supportsExtendedTodoFields, setSupportsExtendedTodoFields] =
+    useState(true);
 
   const priorityLabelMap = useMemo(
     () => ({
@@ -164,11 +220,22 @@ export default function TodoApp() {
     async (currentUserId: string) => {
       setIsFetchingTodos(true);
 
-      const { data, error } = await supabase
-        .from('todos')
-        .select('id, content, is_completed, priority, user_id, created_at')
-        .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false });
+      const runQuery = async (useExtendedFields: boolean) =>
+        supabase
+          .from('todos')
+          .select(useExtendedFields ? TODO_SELECT_EXTENDED : TODO_SELECT_BASE)
+          .eq('user_id', currentUserId)
+          .order('created_at', { ascending: false });
+
+      let { data, error } = await runQuery(supportsExtendedTodoFields);
+
+      if (
+        supportsExtendedTodoFields &&
+        isMissingExtendedTodoFieldsError(error)
+      ) {
+        setSupportsExtendedTodoFields(false);
+        ({ data, error } = await runQuery(false));
+      }
 
       setIsFetchingTodos(false);
 
@@ -183,7 +250,7 @@ export default function TodoApp() {
       setTodos(((data ?? []) as TodoRow[]).map(mapTodoRow));
       return true;
     },
-    [t]
+    [supportsExtendedTodoFields, t]
   );
 
   useEffect(() => {
@@ -233,16 +300,42 @@ export default function TodoApp() {
 
     setIsAddingTodo(true);
 
-    const { data, error } = await supabase
-      .from('todos')
-      .insert({
-        content,
-        user_id: userId,
-        is_completed: false,
-        priority: 'medium',
-      })
-      .select('id, content, is_completed, priority, user_id, created_at')
-      .single();
+    const insertBase = {
+      content,
+      user_id: userId,
+      is_completed: false,
+      priority: 'medium' as const,
+    };
+
+    let result = supportsExtendedTodoFields
+      ? await supabase
+          .from('todos')
+          .insert({
+            ...insertBase,
+            timeline: null,
+            resources: null,
+          })
+          .select(TODO_SELECT_EXTENDED)
+          .single()
+      : await supabase
+          .from('todos')
+          .insert(insertBase)
+          .select(TODO_SELECT_BASE)
+          .single();
+
+    if (
+      supportsExtendedTodoFields &&
+      isMissingExtendedTodoFieldsError(result.error)
+    ) {
+      setSupportsExtendedTodoFields(false);
+      result = await supabase
+        .from('todos')
+        .insert(insertBase)
+        .select(TODO_SELECT_BASE)
+        .single();
+    }
+
+    const { data, error } = result;
 
     setIsAddingTodo(false);
 
@@ -313,18 +406,40 @@ export default function TodoApp() {
       }
 
       const todosToInsert = breakdownData.map((item) => ({
-        content: item.title.trim(),
+        content: buildAiTodoContent(item),
         priority: item.priority,
         is_completed: false,
         user_id: userId,
       }));
 
-      const { error } = await supabase.from('todos').insert(todosToInsert);
+      let insertError = supportsExtendedTodoFields
+        ? (
+            await supabase.from('todos').insert(
+              breakdownData.map((item) => ({
+                ...todosToInsert.find(
+                  (todo) =>
+                    todo.content === buildAiTodoContent(item) &&
+                    todo.priority === item.priority
+                )!,
+                timeline: item.timeline.trim(),
+                resources: item.resources.trim(),
+              }))
+            )
+          ).error
+        : (await supabase.from('todos').insert(todosToInsert)).error;
 
-      if (error) {
+      if (
+        supportsExtendedTodoFields &&
+        isMissingExtendedTodoFieldsError(insertError)
+      ) {
+        setSupportsExtendedTodoFields(false);
+        insertError = (await supabase.from('todos').insert(todosToInsert)).error;
+      }
+
+      if (insertError) {
         notification.error({
           message: t('addTodoError'),
-          description: error.message,
+          description: insertError.message,
         });
         return;
       }
@@ -354,13 +469,37 @@ export default function TodoApp() {
 
     markTodoPending(todo.id, true);
 
-    const { data, error } = await supabase
-      .from('todos')
-      .update({ is_completed: !todo.isCompleted })
-      .eq('id', todo.id)
-      .eq('user_id', userId)
-      .select('id, content, is_completed, priority, user_id, created_at')
-      .single();
+    let result = supportsExtendedTodoFields
+      ? await supabase
+          .from('todos')
+          .update({ is_completed: !todo.isCompleted })
+          .eq('id', todo.id)
+          .eq('user_id', userId)
+          .select(TODO_SELECT_EXTENDED)
+          .single()
+      : await supabase
+          .from('todos')
+          .update({ is_completed: !todo.isCompleted })
+          .eq('id', todo.id)
+          .eq('user_id', userId)
+          .select(TODO_SELECT_BASE)
+          .single();
+
+    if (
+      supportsExtendedTodoFields &&
+      isMissingExtendedTodoFieldsError(result.error)
+    ) {
+      setSupportsExtendedTodoFields(false);
+      result = await supabase
+        .from('todos')
+        .update({ is_completed: !todo.isCompleted })
+        .eq('id', todo.id)
+        .eq('user_id', userId)
+        .select(TODO_SELECT_BASE)
+        .single();
+    }
+
+    const { data, error } = result;
 
     markTodoPending(todo.id, false);
 
@@ -457,7 +596,11 @@ export default function TodoApp() {
               />
               <Button
                 onClick={() => void addAiBreakdownTasks()}
-                loading={{ spinning: isGeneratingAiTodos, icon: <LoadingOutlined spin /> }}
+                loading={
+                  isGeneratingAiTodos
+                    ? { icon: <LoadingOutlined spin /> }
+                    : false
+                }
                 disabled={!isLoaded || isAddingTodo || isGeneratingAiTodos}
               >
                 AI 智能拆解
@@ -539,9 +682,27 @@ export default function TodoApp() {
                           </span>
                         }
                         description={
-                          <Tag color={priorityColorMap[todo.priority]}>
-                            {priorityLabelMap[todo.priority]}
-                          </Tag>
+                          <div className="task-meta">
+                            <Tag color={priorityColorMap[todo.priority]}>
+                              {priorityLabelMap[todo.priority]}
+                            </Tag>
+                            {todo.timeline ? (
+                              <div className="task-detail">
+                                <span className="task-detail-label">
+                                  {language === 'zh' ? '目标时间：' : 'Timeline: '}
+                                </span>
+                                <span>{todo.timeline}</span>
+                              </div>
+                            ) : null}
+                            {todo.resources ? (
+                              <div className="task-detail">
+                                <span className="task-detail-label">
+                                  {language === 'zh' ? '学习资源：' : 'Resources: '}
+                                </span>
+                                <span>{todo.resources}</span>
+                              </div>
+                            ) : null}
+                          </div>
                         }
                       />
                     </List.Item>

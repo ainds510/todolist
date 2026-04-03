@@ -166,6 +166,25 @@
   color: #999;
 }
 
+.task-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.task-detail {
+  color: #595959;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-detail-label {
+  font-weight: 600;
+  color: #262626;
+}
+
 .task-stats {
   margin-top: 16px;
   color: #595959;

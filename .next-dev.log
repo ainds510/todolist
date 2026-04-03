@@ -7,9 +7,28 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1409ms
+ ✓ Ready in 1453ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 623ms (148 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 10.7s (5709 modules)
+ GET / 200 in 11384ms
  ○ Compiling /sign-in/[[...sign-in]] ...
- ✓ Compiled /sign-in/[[...sign-in]] in 12.2s (5759 modules)
- GET / 200 in 13029ms
- GET /sign-in 200 in 13007ms
- GET / 200 in 74ms
+ ✓ Compiled /sign-in/[[...sign-in]] in 1998ms (5759 modules)
+ ✓ Compiled /api/ai/breakdown in 442ms (3002 modules)
+ POST /api/ai/breakdown 200 in 4175ms
+ ✓ Compiled in 1322ms (2971 modules)
+ ✓ Compiled in 3.2s (5733 modules)
+ ✓ Compiled in 1218ms (5747 modules)
+ GET /?_rsc=1p60s 200 in 173ms
+ GET / 200 in 401ms
+ ✓ Compiled in 4.5s (5733 modules)
+ GET / 200 in 504ms
+ ○ Compiling /sign-in/[[...sign-in]] ...
+ ✓ Compiled /sign-in/[[...sign-in]] in 2.2s (2997 modules)
+ GET /sign-in?_rsc=kfnmt 200 in 30ms
+ GET / 200 in 389ms
+ ✓ Compiled in 5.6s (5733 modules)
+ GET / 200 in 503ms
+ ○ Compiling /sign-in/[[...sign-in]] ...
+ ✓ Compiled /sign-in/[[...sign-in]] in 1492ms (2997 modules)
