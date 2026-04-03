@@ -1,0 +1,15 @@
+
+> todolist@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1409ms
+ ○ Compiling /sign-in/[[...sign-in]] ...
+ ✓ Compiled /sign-in/[[...sign-in]] in 12.2s (5759 modules)
+ GET / 200 in 13029ms
+ GET /sign-in 200 in 13007ms
+ GET / 200 in 74ms

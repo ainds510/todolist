@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import { Layout } from "antd";
-import { ClerkProvider } from "@clerk/nextjs";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
+import { LanguageProvider } from './components/LanguageProvider';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "TO-DO-LIST",
-  description: "一个简洁现代的待办事项应用",
+  title: 'TO-DO-LIST',
+  description: 'A clean modern todo app',
 };
 
 export default function RootLayout({
@@ -17,9 +17,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="zh-CN">
         <body>
-          <Layout style={{ minHeight: "100vh" }}>
+          <LanguageProvider>
             {children}
-          </Layout>
+          </LanguageProvider>
         </body>
       </html>
     </ClerkProvider>

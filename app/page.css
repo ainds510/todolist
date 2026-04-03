@@ -1,3 +1,177 @@
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-sider {
+  background: #001529;
+}
+
+.main-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  background: #f5f5f5;
+  padding: 24px;
+  flex: 1;
+}
+
+.content-area-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.redirect-state {
+  text-align: center;
+}
+
+.redirect-state .ant-spin {
+  margin-bottom: 16px;
+}
+
+.todo-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  min-height: 400px;
+}
+
+.task-composer {
+  margin-bottom: 24px;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.task-skeleton-header {
+  width: 180px;
+  height: 32px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+.task-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-input-skeleton {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+.task-add-button {
+  min-width: 104px;
+}
+
+.task-button-skeleton {
+  width: 104px !important;
+  min-height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+.task-tabs {
+  margin-bottom: 16px;
+}
+
+.task-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-skeleton-item {
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.task-skeleton-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.task-skeleton-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+.task-skeleton-copy {
+  flex: 1;
+}
+
+.task-skeleton-title {
+  width: 48%;
+  height: 18px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+.task-skeleton-tag {
+  width: 76px;
+  height: 22px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: task-skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes task-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.task-list .ant-list-empty-text {
+  padding: 48px 16px;
+}
+
+.task-list-item {
+  padding-inline: 8px;
+}
+
+.task-title {
+  color: #000;
+  word-break: break-word;
+}
+
+.task-title-completed {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.task-stats {
+  margin-top: 16px;
+  color: #595959;
+  font-size: 14px;
+}
+
 .logo {
   padding: 24px 16px;
   text-align: center;
@@ -10,4 +184,31 @@
   font-weight: 600;
   margin: 0;
   letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .content-area {
+    padding: 16px;
+  }
+
+  .todo-card {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .task-composer {
+    flex-direction: column;
+  }
+
+  .task-add-button {
+    width: 100%;
+  }
+
+  .task-button-skeleton {
+    width: 100% !important;
+  }
+
+  .task-list-item .ant-list-item-action {
+    margin-inline-start: 12px;
+  }
 }
